@@ -253,12 +253,17 @@ def charger_toutes_les_recettes():
 utilisateurs = charger_toutes_les_recettes()
 
 
-@app.route("/<utilisateur>/<slug>")
-def voir_recette(utilisateur, slug):
-    if utilisateur not in utilisateurs:
-        return "Utilisateur introuvable", 404
+@app.route("/ping")  # Crée l'adresse /ping, que UptimeRobot appellera toutes les 5 minutes
+def ping():  # Fonction exécutée à chaque visite de /ping
+    # Lit UNE seule ligne dans Supabase : une vraie requête, donc de l'activité aux yeux de Supabase
+    supabase.table("recettes").select("id").limit(1).execute()  # limit(1) garde la requête légère
+    return "ok"  # Réponse minimale : UptimeRobot vérifie juste que le site répond
 
-    if slug not in utilisateurs[utilisateur]:
+
+@app.route("/<utilisateur>/<slug>")  # Adresse d'une recette partagée, ex. /nancy/lemon-kiss-cake
+def voir_recette(utilisateur, slug):  # Flask passe le prénom et le slug de l'adresse à la fonction
+    # Si le prénom OU la recette n'existe pas, on renvoie une erreur 404 propre (au lieu d'un plantage)
+    if utilisateur not in utilisateurs or slug not in utilisateurs[utilisateur]:
         return "Recette introuvable", 404
 
     recette = utilisateurs[utilisateur][slug]
